@@ -4,122 +4,130 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
-//Movie will hold information about a movie
+//Movie Struct (Model)
 type Movie struct {
-	MovieTitle   string `json:"movieTitle"`
-	Description  string `json:"description"`
-	VotingValues []int  `json:"votingValues"`
+	ID      string `json:"id"`
+	Title   string `json:"title"`
+	Ranking []int  `json:"ranking"`
 }
 
 //movies will be a slice of article
 var movies []Movie
 
 //Data is createed for holding the key pairs of movies and their average voting totals
-var Data map[string][]float64
+var Data map[string][]int
 
 func main() {
 
 	fmt.Println("REST API For Voting On Movies")
+
+	//Mock Data
 	slice := [...]int{1, 2, 3, 4, 5}
-	movies = []Movie{
-		Movie{MovieTitle: "Donnie Darko", Description: "Movie Description 1", VotingValues: slice[2:5]},
-		Movie{MovieTitle: "Halloween", Description: "Movie Description 2", VotingValues: slice[1:4]},
-		Movie{MovieTitle: "Tombstone", Description: "Movie Description 1", VotingValues: slice[0:3]},
-		Movie{MovieTitle: "Adventureland", Description: "Movie Description 2", VotingValues: slice[0:3]},
-	}
+	movies = append(movies, Movie{ID: "1", Title: "Donnie Darko", Ranking: slice[1:4]})
+	movies = append(movies, Movie{ID: "2", Title: "Halloween", Ranking: slice[0:3]})
+	movies = append(movies, Movie{ID: "3", Title: "Interstellar", Ranking: slice[2:5]})
+	//		Movie{MovieTitle: "Tombstone", Description: "Movie Description 1", VotingValues: slice[0:3]},
+	//		Movie{MovieTitle: "Adventureland", Description: "Movie Description 2", VotingValues: slice[0:3]},
+	//}
 	handleRequests()
 }
 
-//handleRequests will handle all of the request to the 'server'
+//handleRequests is a route handler that will handle all request to restAPI
 func handleRequests() {
 
-	//myRouter := mux.NewRouter().StrictSlash(true)
-	http.HandleFunc("/", homePage)
-	http.HandleFunc("/api", returnAllMovies)
-	//http.HandleFunc("/get", getData)
-	http.HandleFunc("/results", resultsPage)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.HandleFunc("/", homePage)
+	myRouter.HandleFunc("/api", postMovies).Methods("POST")
+	myRouter.HandleFunc("/api", getMovies).Methods("GET")
+	myRouter.HandleFunc("/api/results", resultsPage).Methods("POST")
+	myRouter.HandleFunc("/api/{ID}", getMovie).Methods("GET")       //can't get to work????
+	myRouter.HandleFunc("/api/{ID}", deleteMovie).Methods("DELETE") //cant get to work????
+	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
 
 //the homePage is the homepage
 func homePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Welcome to the Homepage")
+	fmt.Fprint(w, "Welcome to the Homepage \n")
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-//returnAllMovies is where all of the movie data will be stored
-func returnAllMovies(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Println("Endpoint hit: returnAllMovies endpint")
+// Get all movies
+func getMovies(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Endpoint hit: getMovies endpint")
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movies)
-	averageMovies(movies)
+
 }
 
-//the resultsPage will display the movie title along with the average movie votes
+// Post movies to /api page
+func postMovies(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Welcome to api postMovie page \n")
+	fmt.Println("Endpoint hit: postMovies endpint")
+	w.Header().Set("Content-Type", "application/json")
+	var mover Movie
+	_ = json.NewDecoder(r.Body).Decode(&mover)
+	mover.ID = strconv.Itoa(rand.Intn(100000000)) //Mock ID
+	movies = append(movies, mover)
+	json.NewEncoder(w).Encode(mover)
+}
+
+//the resultsPage will display the movie title along with the total movie votes
 func resultsPage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Welcome to results page \n")
 	fmt.Println("Endpoint hit: resultsPage endpint")
+	totalMovieRankings(movies)
 	json.NewEncoder(w).Encode(Data)
-
 }
 
-/*
-// Article - Our struct for all articles
-type Article struct {
-    Id      string    `json:"Id"`
-    Title   string `json:"Title"`
-    Desc    string `json:"desc"`
-    Content string `json:"content"`
+// Total the rankings of the movies
+func totalMovieRankings(movies []Movie) {
+	Data = make(map[string][]int)
+
+	for _, mov := range movies {
+		name := mov.Title
+		vals := mov.Ranking
+		total := 0
+		for _, num := range vals {
+			total = total + num
+		}
+		Data[name] = append(Data[name], total)
+	}
 }
 
-func returnSingleArticle(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-    key := vars["id"]
-
-    for _, article := range Articles {
-        if article.Id == key {
-            json.NewEncoder(w).Encode(article)
-        }
-    }
+//WILL NOT WORK FOR SOME REASON
+// Get single movie //WILL NOT WORK FOR SOME REASON
+func getMovie(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Endpoint hit: getMovie endpint")
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)["id"] // Gets params
+	// Loop through books and find one with the id from the params
+	for _, item := range movies {
+		if item.ID == params {
+			json.NewEncoder(w).Encode(item)
+			//return
+		}
+	}
+	json.NewEncoder(w).Encode(&Movie{})
 }
 
-
-func createNewArticle(w http.ResponseWriter, r *http.Request) {
-    // get the body of our POST request
-    // unmarshal this into a new Article struct
-    // append this to our Articles array.
-    reqBody, _ := ioutil.ReadAll(r.Body)
-    var article Article
-    json.Unmarshal(reqBody, &article)
-    // update our global Articles array to include
-    // our new Article
-    Articles = append(Articles, article)
-
-    json.NewEncoder(w).Encode(article)
+//WILL NOT WORK FOR SOME REASON
+// Delete movie //WILL NOT WORK FOR SOME REASON
+func deleteMovie(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Endpoint hit: deleteMovie endpint")
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for index, item := range movies {
+		if item.ID == params["id"] {
+			movies = append(movies[:index], movies[index+1:]...)
+			break
+		}
+	}
+	json.NewEncoder(w).Encode(movies)
 }
-
-func deleteArticle(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-    id := vars["id"]
-
-    for index, article := range Articles {
-        if article.Id == id {
-            Articles = append(Articles[:index], Articles[index+1:]...)
-        }
-    }
-
-}
-
-func handleRequests() {
-    myRouter := mux.NewRouter().StrictSlash(true)
-    myRouter.HandleFunc("/", homePage)
-    myRouter.HandleFunc("/articles", returnAllArticles)
-    myRouter.HandleFunc("/article", createNewArticle).Methods("POST")
-    myRouter.HandleFunc("/article/{id}", deleteArticle).Methods("DELETE")
-    myRouter.HandleFunc("/article/{id}", returnSingleArticle)
-    log.Fatal(http.ListenAndServe(":10000", myRouter))
-}
-
-*/
