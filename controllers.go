@@ -59,8 +59,6 @@ func createMovie(c *gin.Context) {
 	var trimmed string
 	slice := strings.SplitAfter(string(data), "}")
 	// will loop over all of the slices
-	// some logic will be used based on how the data is sent to have the movies either added to
-	// or will update existing movies
 	for counter, test := range slice {
 		//this accounts for the end string that has no valuable data
 		if test == "]" {

@@ -23,14 +23,9 @@ func main() {
 		AllowWildcard:          true,
 		AllowBrowserExtensions: true,
 		AllowWebSockets:        true,
-		//AllowOrigins:     []string{"*"},
-		AllowMethods:  []string{"GET", "POST", "OPTIONS", "PATCH", "DELETE", "*"},
-		AllowHeaders:  []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With", "*"},
-		ExposeHeaders: []string{"Content-Length", "*"},
-
-		//AllowOriginFunc: func(origin string) bool {
-		//	return true
-		//},
+		AllowMethods:           []string{"GET", "POST", "OPTIONS", "PATCH", "DELETE", "*"},
+		AllowHeaders:           []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With", "*"},
+		ExposeHeaders:          []string{"Content-Length", "*"},
 	}))
 
 	// Routes
