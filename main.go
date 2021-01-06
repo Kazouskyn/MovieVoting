@@ -38,5 +38,5 @@ func main() {
 	router.DELETE("/", clearDataBase)
 
 	// Run the server on port 3000
-	router.Run(":3000")
+	router.Run(":8080")
 }
