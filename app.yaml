@@ -1,1 +1,2 @@
 runtime: go114
+service: api

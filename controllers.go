@@ -87,7 +87,7 @@ func createMovie(c *gin.Context) {
 			trimmed = strings.TrimPrefix(test, ",")
 			err = json.Unmarshal([]byte(trimmed), &smhover)
 			if err != nil {
-				fmt.Printf("something went wrong with Unmarshalling the data error: %v\n", err)
+				fmt.Printf("something went wrong with Unmarshalling the data error 2: %v\n", err)
 				os.Exit(1)
 			}
 			// check if the movie is in the DB

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gin-contrib/cors"
@@ -37,6 +38,18 @@ func main() {
 	router.DELETE("/api/:id", deleteMovie)
 	router.DELETE("/", clearDataBase)
 
-	// Run the server on port 3000
-	router.Run(":8080")
+	// Run the server on port 8080
+	test := getPort()
+	fmt.Printf("test: %s", test)
+	router.Run(test)
+}
+
+//will get the port the server will run on
+func getPort() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = ":8080"
+		log.Printf("Defaulting to port %s", port)
+	}
+	return port
 }
